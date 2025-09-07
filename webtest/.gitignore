@@ -1,0 +1,46 @@
+# Maven build
+/target/
+
+# Gradle build
+/build/
+/.gradle/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+*.class
+*.project
+*.classpath
+*.settings/
+
+# Logs
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Spring Boot config
+application-*.yml
+application-*.yaml
+application-*.properties
+
+# If you want to keep local config but not commit it
+application.yml
+application.yaml
+application.properties
+
+# Security
+*.keystore
+*.pem
+*.p12
+*.crt
+*.key
+
+# Test output
+/test-output/
+
+# Environment
+.env
