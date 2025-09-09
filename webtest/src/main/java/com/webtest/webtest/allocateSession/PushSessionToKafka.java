@@ -17,9 +17,9 @@ public class PushSessionToKafka implements SessionAllocationInterface {
     }
 
     @Override
-    public void allocate(Long sessionId, String browser) {
+    public void allocate(Long sessionId, String browser, String instructions, String url) {
         try {
-            Session session = new Session(sessionId, browser);
+            Session session = new Session(sessionId, browser,instructions,url);
 
             String json = objectMapper.writeValueAsString(session);
 
@@ -36,10 +36,14 @@ public class PushSessionToKafka implements SessionAllocationInterface {
 
         private Long sessionId;
         private String browser;
+        private String instructions;
+        private String url;
 
-        public Session(Long sessionId, String browser) {
+        public Session(Long sessionId, String browser, String instructions,String url) {
             this.sessionId = sessionId;
             this.browser = browser;
+            this.instructions=instructions;
+            this.url=url;
         }
 
         public Long getSessionId() {
@@ -56,6 +60,14 @@ public class PushSessionToKafka implements SessionAllocationInterface {
 
         public void setBrowser(String browser) {
             this.browser = browser;
+        }
+
+        public String getInstructions(){
+            return instructions; 
+        }
+
+        public String getUrl(){
+            return url;
         }
     }
 }

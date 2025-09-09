@@ -42,7 +42,7 @@ public class SessionService {
         }
 
         Session session = sessionFactory.buildSession(request, user);
-        allocationStrategy.allocate(session.getId(), session.getBrowser());
+        allocationStrategy.allocate(session.getId(), session.getBrowser(),session.getInstructions(),session.getUrl());
         return sessionRepository.save(session);
     }
 }
