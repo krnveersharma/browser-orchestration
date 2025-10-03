@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
+	"github.com/krnveersharma/browserdeck/schemas"
 	mobycontainer "github.com/moby/moby/api/types/container"
 	mobyclient "github.com/moby/moby/client"
 	"github.com/tebeka/selenium"
@@ -70,7 +71,17 @@ func (c *ChromeLauncher) stopContainer(containerID string) {
 }
 
 func connectWebDriver(port string) (selenium.WebDriver, error) {
-	caps := selenium.Capabilities{"browserName": "chrome"}
+	caps := selenium.Capabilities{
+		"browserName": "chrome",
+		"goog:chromeOptions": map[string]any{
+			"args": []string{
+				"--headless",
+				"--no-sandbox",
+				"--disable-dev-shm-usage",
+			},
+		},
+	}
+
 	url := fmt.Sprintf("http://localhost:%s/wd/hub", port)
 
 	for range 10 {
@@ -83,33 +94,70 @@ func connectWebDriver(port string) (selenium.WebDriver, error) {
 	return nil, fmt.Errorf("selenium not ready on port %s", port)
 }
 
-func executeInstruction(driver selenium.WebDriver, instruction, url string) error {
+func waitForPageLoad(driver selenium.WebDriver, timeout time.Duration) error {
+	start := time.Now()
+	for {
+		readyState, err := driver.ExecuteScript("return document.readyState", nil)
+		if err != nil {
+			return fmt.Errorf("error checking page readyState: %v", err)
+		}
+		if readyState == "complete" {
+			return nil
+		}
+		if time.Since(start) > timeout {
+			return fmt.Errorf("timeout waiting for page to load")
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func executeInstruction(driver selenium.WebDriver, instructions []schemas.Instruction, url string) error {
 	if err := driver.Get(url); err != nil {
 		return fmt.Errorf("failed to open URL: %v", err)
 	}
+	if err := waitForPageLoad(driver, 15*time.Second); err != nil {
+		return err
+	}
+	for _, instruction := range instructions {
+		switch instruction.Action {
+		case "goto":
+			if err := driver.Get(instruction.Value); err != nil {
+				return fmt.Errorf("failed to open URL: %v", err)
+			}
+		case "click":
+			element, err := driver.FindElement(selenium.ByXPATH, instruction.Selector)
+			if err != nil {
+				return fmt.Errorf("failed to find element: %v", err)
+			}
+			element.Click()
+		case "type":
+			element, err := driver.FindElement(selenium.ByXPATH, instruction.Selector)
+			if err != nil {
+				return fmt.Errorf("failed to find element: %v", err)
+			}
+			element.SendKeys(instruction.Value)
+		case "scroll":
+			js := fmt.Sprintf("window.scrollBy(0, %s);", instruction.Value)
+			_, err := driver.ExecuteScript(js, nil)
+			if err != nil {
+				return fmt.Errorf("failed to scroll: %v", err)
+			}
 
-	switch instruction {
-	case "scrollAndLike":
-		driver.ExecuteScript("window.scrollBy(0,800);", nil)
-		time.Sleep(3 * time.Second)
-
-		elem, err := driver.FindElement(selenium.ByXPATH, `(//a[@id="thumbnail"])[1]`)
-		if err == nil {
-			elem.Click()
+		case "scrollToElement":
+			element, err := driver.FindElement(selenium.ByXPATH, instruction.Selector)
+			if err != nil {
+				return fmt.Errorf("failed to find element for scrolling: %v", err)
+			}
+			_, err = driver.ExecuteScript("arguments[0].scrollIntoView(true);", []interface{}{element})
+			if err != nil {
+				return fmt.Errorf("failed to scroll to element: %v", err)
+			}
 		}
-		time.Sleep(5 * time.Second)
-
-		likeBtn, err := driver.FindElement(selenium.ByXPATH, `//ytd-toggle-button-renderer[@id="like-button"]//button`)
-		if err == nil {
-			likeBtn.Click()
-		}
-	default:
-		log.Printf("Instruction %s not recognized", instruction)
 	}
 	return nil
 }
 
-func (c *ChromeLauncher) Launch(sessionId int64, instruction, url string) error {
+func (c *ChromeLauncher) Launch(sessionId int64, instructions []schemas.Instruction, url string) error {
 	containerID, port, err := c.startContainer(sessionId)
 	if err != nil {
 		return err
@@ -122,5 +170,5 @@ func (c *ChromeLauncher) Launch(sessionId int64, instruction, url string) error 
 	}
 	defer driver.Quit()
 
-	return executeInstruction(driver, instruction, url)
+	return executeInstruction(driver, instructions, url)
 }
