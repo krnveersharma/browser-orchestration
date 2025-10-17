@@ -1,6 +1,8 @@
 module github.com/krnveersharma/browserdeck
 
-go 1.23.0
+go 1.24.3
+
+toolchain go1.24.9
 
 // Kafka
 require github.com/segmentio/kafka-go v0.4.49
@@ -36,4 +38,10 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 )
 
-require github.com/blang/semver v3.5.1+incompatible // indirect
+require (
+	github.com/amitbet/vnc2video v0.0.0-20190616012314-9d50b9dab1d9 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/unistack-org/go-rfb v0.0.0-20200629134254-b5a9437686dd // indirect
+	golang.org/x/net v0.38.0 // indirect
+)

@@ -25,7 +25,7 @@ func main() {
 		browserLauncher := browser.GetLauncher(msg.Browser)
 		err := browserLauncher.Launch(msg.SessionID, msg.Instructions, msg.Url)
 		if err != nil {
-			log.Printf("error in launching browser: ", err)
+			log.Printf("error in launching browser: %v", err)
 		}
 		log.Printf("Launching browser: %s", msg.Browser)
 

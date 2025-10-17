@@ -75,9 +75,9 @@ func connectWebDriver(port string) (selenium.WebDriver, error) {
 		"browserName": "chrome",
 		"goog:chromeOptions": map[string]any{
 			"args": []string{
-				"--headless",
 				"--no-sandbox",
 				"--disable-dev-shm-usage",
+				"--disable-features=SigninIntercept,SignInProfileCreation",
 			},
 		},
 	}
@@ -119,6 +119,7 @@ func executeInstruction(driver selenium.WebDriver, instructions []schemas.Instru
 		return err
 	}
 	for _, instruction := range instructions {
+		log.Printf("executing instruction: %v", instruction)
 		switch instruction.Action {
 		case "goto":
 			if err := driver.Get(instruction.Value); err != nil {
@@ -153,6 +154,7 @@ func executeInstruction(driver selenium.WebDriver, instructions []schemas.Instru
 				return fmt.Errorf("failed to scroll to element: %v", err)
 			}
 		}
+		time.Sleep(10 * time.Second)
 	}
 	return nil
 }
@@ -170,5 +172,11 @@ func (c *ChromeLauncher) Launch(sessionId int64, instructions []schemas.Instruct
 	}
 	defer driver.Quit()
 
-	return executeInstruction(driver, instructions, url)
+	err = executeInstruction(driver, instructions, url)
+	if err != nil {
+		return err
+	}
+	// go RecordTest()
+
+	return err
 }
