@@ -37,8 +37,7 @@ func (c *ChromeLauncher) startContainer(sessionId int64) (string, string, error)
 		},
 		&container.HostConfig{
 			PortBindings: nat.PortMap{
-				port:       []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
-				"5900/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
+				port: []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
 			},
 			Binds: []string{"/home/karanveersharma/selenium_recordings:/recordings"},
 		},
