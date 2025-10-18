@@ -1,5 +1,6 @@
 package com.webtest.webtest.entity;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -7,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import java.util.List;
 
 @Entity
 @Table(name = "sessions")
@@ -16,7 +19,9 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String url;
-    private String instructions;
+    
+    @ElementCollection
+    private List<Instruction> instructions;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -32,7 +37,7 @@ public class Session {
         return url;
     }
 
-    public String getInstructions() {
+    public List<Instruction> getInstructions() {
         return instructions;
     }
 
@@ -52,7 +57,7 @@ public class Session {
         this.url = url;
     }
 
-    public void setInstructions(String instructions) {
+    public void setInstructions(List<Instruction> instructions) {
         this.instructions = instructions;
     }
 

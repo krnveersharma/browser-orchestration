@@ -1,9 +1,12 @@
 package com.webtest.webtest.allocateSession;
 
+import com.webtest.webtest.entity.Instruction;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webtest.webtest.kafka.MessageProducer.MessageProducer;
+
+import java.util.List;
 
 @Service
 public class PushSessionToKafka implements SessionAllocationInterface {
@@ -17,7 +20,7 @@ public class PushSessionToKafka implements SessionAllocationInterface {
     }
 
     @Override
-    public void allocate(Long sessionId, String browser, String instructions, String url) {
+    public void allocate(Long sessionId, String browser, List<Instruction> instructions, String url) {
         try {
             Session session = new Session(sessionId, browser,instructions,url);
 
@@ -36,10 +39,10 @@ public class PushSessionToKafka implements SessionAllocationInterface {
 
         private Long sessionId;
         private String browser;
-        private String instructions;
+        private List<Instruction>  instructions;
         private String url;
 
-        public Session(Long sessionId, String browser, String instructions,String url) {
+        public Session(Long sessionId, String browser, List<Instruction> instructions,String url) {
             this.sessionId = sessionId;
             this.browser = browser;
             this.instructions=instructions;
@@ -62,7 +65,7 @@ public class PushSessionToKafka implements SessionAllocationInterface {
             this.browser = browser;
         }
 
-        public String getInstructions(){
+        public List<Instruction>  getInstructions(){
             return instructions; 
         }
 

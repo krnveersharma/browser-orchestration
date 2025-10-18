@@ -1,9 +1,11 @@
 package com.webtest.webtest.dtos;
+import com.webtest.webtest.entity.Instruction;
 
+import java.util.List;
 public class SessionPostRequest {
 
     private String url;
-    private String instructions;
+    private List<Instruction> instructions;
     private String browser;
     private String status;
 
@@ -11,7 +13,7 @@ public class SessionPostRequest {
         return url;
     }
 
-    public String getInstructions() {
+    public List<Instruction> getInstructions() {
         return instructions;
     }
 
@@ -27,7 +29,7 @@ public class SessionPostRequest {
         this.url = url;
     }
 
-    public void setInstructions(String instructions) {
+    public void setInstructions(List<Instruction> instructions) {
         this.instructions = instructions;
     }
 

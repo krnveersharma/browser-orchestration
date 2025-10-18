@@ -1,12 +1,21 @@
-package com.webtest.webtest.dtos;
+package com.webtest.webtest.entity;
 
-import org.springframework.security.core.Transient;
+import jakarta.persistence.Embeddable;
 
-@Transient
+@Embeddable
 public class Instruction {
     private String action;
     private String value;
     private String selector;
+
+    // Default constructor required by JPA
+    public Instruction() {}
+
+    public Instruction(String action, String value, String selector) {
+        this.action = action;
+        this.value = value;
+        this.selector = selector;
+    }
 
     public String getAction() {
         return action;
