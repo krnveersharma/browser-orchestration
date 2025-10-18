@@ -8,16 +8,13 @@ toolchain go1.24.9
 require github.com/segmentio/kafka-go v0.4.49
 
 require (
-	github.com/docker/go-connections v0.6.0 // indirect
+	github.com/docker/go-connections v0.6.0
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/moby/api v1.52.0-beta.1 // indirect
-	github.com/moby/moby/client v0.1.0-beta.0
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 )
 
 require (
@@ -39,9 +36,8 @@ require (
 )
 
 require (
-	github.com/amitbet/vnc2video v0.0.0-20190616012314-9d50b9dab1d9 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
-	github.com/unistack-org/go-rfb v0.0.0-20200629134254-b5a9437686dd // indirect
-	golang.org/x/net v0.38.0 // indirect
+	github.com/docker/docker v28.5.1+incompatible // indirect
+	github.com/moby/moby v23.0.0+incompatible // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 )

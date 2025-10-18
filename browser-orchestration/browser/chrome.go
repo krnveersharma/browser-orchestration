@@ -6,19 +6,19 @@ import (
 	"log"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/krnveersharma/browserdeck/schemas"
-	mobycontainer "github.com/moby/moby/api/types/container"
-	mobyclient "github.com/moby/moby/client"
 	"github.com/tebeka/selenium"
 )
 
 type ChromeLauncher struct {
-	cli *mobyclient.Client
+	cli *client.Client
 }
 
 func NewChromeLauncher() (*ChromeLauncher, error) {
-	cli, err := mobyclient.NewClientWithOpts(mobyclient.FromEnv, mobyclient.WithAPIVersionNegotiation())
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
@@ -30,15 +30,17 @@ func (c *ChromeLauncher) startContainer(sessionId int64) (string, string, error)
 
 	resp, err := c.cli.ContainerCreate(
 		context.Background(),
-		&mobycontainer.Config{
-			Image: "selenium/standalone-chrome",
+		&container.Config{
+			Image: "selenium-chrome-ffmpeg",
 			Env:   []string{fmt.Sprintf("SESSION_ID=%d", sessionId)},
+			Cmd:   []string{"/opt/bin/entry_point.sh"},
 		},
-		&mobycontainer.HostConfig{
+		&container.HostConfig{
 			PortBindings: nat.PortMap{
-				port:       []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},     // random host port
-				"5900/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "5900"}}, // optional VNC debug
+				port:       []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
+				"5900/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
 			},
+			Binds: []string{"/home/karanveersharma/selenium_recordings:/recordings"},
 		},
 		nil, nil, "",
 	)
@@ -46,24 +48,24 @@ func (c *ChromeLauncher) startContainer(sessionId int64) (string, string, error)
 		return "", "", err
 	}
 
-	if err := c.cli.ContainerStart(context.Background(), resp.ID, mobyclient.ContainerStartOptions{}); err != nil {
+	if err := c.cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{}); err != nil {
 		return "", "", err
 	}
-	log.Println("Started Chrome container with ID:", resp.ID)
 
 	inspect, err := c.cli.ContainerInspect(context.Background(), resp.ID)
 	if err != nil {
 		return "", "", err
 	}
+
 	hostPort := inspect.NetworkSettings.Ports[port][0].HostPort
 	return resp.ID, hostPort, nil
 }
 
 func (c *ChromeLauncher) stopContainer(containerID string) {
-	if err := c.cli.ContainerStop(context.Background(), containerID, mobyclient.ContainerStopOptions{}); err != nil {
+	if err := c.cli.ContainerStop(context.Background(), containerID, container.StopOptions{}); err != nil {
 		log.Printf("Failed to stop container %s: %v", containerID, err)
 	}
-	if err := c.cli.ContainerRemove(context.Background(), containerID, mobyclient.ContainerRemoveOptions{Force: true}); err != nil {
+	if err := c.cli.ContainerRemove(context.Background(), containerID, container.RemoveOptions{Force: true}); err != nil {
 		log.Printf("Failed to remove container %s: %v", containerID, err)
 	} else {
 		log.Println("Removed container:", containerID)
@@ -115,9 +117,7 @@ func executeInstruction(driver selenium.WebDriver, instructions []schemas.Instru
 	if err := driver.Get(url); err != nil {
 		return fmt.Errorf("failed to open URL: %v", err)
 	}
-	if err := waitForPageLoad(driver, 15*time.Second); err != nil {
-		return err
-	}
+
 	for _, instruction := range instructions {
 		log.Printf("executing instruction: %v", instruction)
 		switch instruction.Action {
@@ -165,18 +165,34 @@ func (c *ChromeLauncher) Launch(sessionId int64, instructions []schemas.Instruct
 		return err
 	}
 	defer c.stopContainer(containerID)
-
 	driver, err := connectWebDriver(port)
 	if err != nil {
 		return err
 	}
 	defer driver.Quit()
+	if err := waitForPageLoad(driver, 15*time.Second); err != nil {
+		return err
+	}
+	if _, err := startRecording(c.cli, containerID, sessionId); err != nil {
+		log.Printf("Failed to start recording: %v", err)
+	}
+	defer func() {
+		if containerID != "" {
+			log.Println("Gracefully signaling FFmpeg to stop and waiting to finalize recording...")
+			if err := stopRecording(c.cli, containerID, sessionId); err != nil {
+				log.Printf("Error signaling FFmpeg to stop: %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			log.Println("FFmpeg wait complete.")
+		}
+	}()
 
 	err = executeInstruction(driver, instructions, url)
 	if err != nil {
 		return err
 	}
-	// go RecordTest()
+
+	time.Sleep(2 * time.Second)
 
 	return err
 }
